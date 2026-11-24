@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -37,4 +37,13 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()  # type: ignore[call-arg]
+    try:
+        return Settings()  # type: ignore[call-arg]
+    except ValidationError as exc:
+        problems = "\n".join(
+            f"  - {'.'.join(str(p) for p in err['loc']).upper()}: {err['msg']}" for err in exc.errors()
+        )
+        raise SystemExit(
+            "\nConfiguration error - fix these environment variables "
+            "(locally in .env, on Render under Service -> Environment):\n" + problems + "\n"
+        ) from None
