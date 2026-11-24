@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: library-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # Render routes traffic to $PORT; proxy headers make audit logs record the real client IP.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips="*"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.5
+      - key: DATABASE_URL
+        sync: false # paste your Neon URL in the Render dashboard
+      - key: JWT_SECRET
+        generateValue: true # Render creates a strong random secret
+      - key: TIMEZONE
+        value: Asia/Kolkata
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "60"
